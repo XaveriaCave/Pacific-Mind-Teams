@@ -38,7 +38,7 @@ import {
 
 export default function App() {
   // 1. Core Config & Themes State
-  const [timeMode, setTimeMode] = useState<TimeMode>("night");
+  const [timeMode, setTimeMode] = useState<TimeMode>("day");
   const [gridSize, setGridSize] = useState<number>(12);
   const [activeTab, setActiveTab] = useState<"2d" | "3d">("3d");
   const [is3DEnlarged, setIs3DEnlarged] = useState<boolean>(false);
@@ -95,7 +95,7 @@ export default function App() {
           setTeams(parsed.teams);
           setActiveTeamId(parsed.activeTeamId || "startup-launcher");
           setGridSize(parsed.gridSize || 12);
-          setTimeMode(parsed.timeMode || "night");
+          setTimeMode(parsed.timeMode || "day");
           if (parsed.history) setMessages(parsed.history);
           return;
         }
@@ -517,7 +517,7 @@ export default function App() {
             setTeams(parsed.teams);
             setActiveTeamId(parsed.activeTeamId || parsed.teams[0].id);
             setGridSize(parsed.gridSize || 12);
-            setTimeMode(parsed.timeMode || "night");
+            setTimeMode(parsed.timeMode || "day");
             if (parsed.history) setMessages(parsed.history);
             alert("Workspace blueprint imported successfully!");
           }

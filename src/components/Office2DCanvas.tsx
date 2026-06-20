@@ -241,6 +241,15 @@ export default function Office2DCanvas({
     };
   };
 
+  const getTouchCoords = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect || e.touches.length === 0) return { x: 0, y: 0 };
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top,
+    };
+  };
+
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getMouseCoords(e);
     const clickedGrid = toGrid(x, y);
@@ -293,6 +302,60 @@ export default function Office2DCanvas({
   };
 
   const handleMouseUp = () => {
+    setDraggedAgentId(null);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const { x, y } = getTouchCoords(e);
+    const clickedGrid = toGrid(x, y);
+
+    // If stamp tool is active, place the selected stamp and return
+    if (activeStampTool !== "none") {
+      const existingDecor = decorItems.find((d) => d.x === clickedGrid.x && d.z === clickedGrid.z);
+      if (existingDecor) {
+        onRemoveDecorItem(existingDecor.id);
+      } else {
+        onAddDecorItem({
+          id: `decor-${Date.now()}`,
+          type: activeStampTool,
+          x: clickedGrid.x,
+          z: clickedGrid.z,
+        });
+      }
+      setActiveStampTool("none"); // reset stamp tool after placement
+      return;
+    }
+
+    // Find if user clicked on an agent node to drag it around
+    const foundAgent = agents.find(
+      (a) => a.gridPosition.x === clickedGrid.x && a.gridPosition.z === clickedGrid.z
+    );
+
+    if (foundAgent) {
+      setDraggedAgentId(foundAgent.id);
+      return;
+    }
+
+    // Find if clicked on any decor item to delete it instantly
+    const foundDecor = decorItems.find(
+      (d) => d.x === clickedGrid.x && d.z === clickedGrid.z
+    );
+    if (foundDecor) {
+      onRemoveDecorItem(foundDecor.id);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const { x, y } = getTouchCoords(e);
+    setMousePos({ x, y });
+
+    if (draggedAgentId) {
+      const g = toGrid(x, y);
+      onUpdateAgentPosition(draggedAgentId, g.x, g.z);
+    }
+  };
+
+  const handleTouchEnd = () => {
     setDraggedAgentId(null);
   };
 
@@ -377,14 +440,17 @@ export default function Office2DCanvas({
           </span>
         </div>
 
-        <canvas
+         <canvas
           ref={canvasRef}
           width={dimensions.width}
           height={dimensions.height}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          className="cursor-crosshair block"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="cursor-crosshair block touch-none"
           id="2d-office-custom-canvas"
         />
       </div>
