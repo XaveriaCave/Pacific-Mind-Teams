@@ -560,7 +560,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight">
-              Task Delegation Simulator
+              Pacific Mind Teams
             </h1>
             <p className="text-[10px] text-slate-500 font-mono">
               3D ISOMETRIC MULTI-AGENT SWARM BLUEPRINT
