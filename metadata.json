@@ -1,0 +1,6 @@
+{
+  "name": "Multi-Agent Orchestration Simulator",
+  "description": "An interactive 3D/isometric multi-agent workspace where custom autonomous AI teams visually collaborate, delegate, process tasks, and stream communication logs in real time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
