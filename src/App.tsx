@@ -1520,7 +1520,7 @@ export default function App() {
                     rel="noopener noreferrer"
                     className="text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
                   >
-                    Get Key from Google AI Studio ↗
+                    Get Key from Google AI ↗
                   </a>
                 </label>
                 <div className="relative">
