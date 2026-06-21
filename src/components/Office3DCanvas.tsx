@@ -1578,8 +1578,8 @@ export default function Office3DCanvas({
         <button
           onClick={() => setAllowRandomWalks((w) => !w)}
           className={`px-2.5 py-1 text-[8px] font-mono tracking-wider border rounded-lg transition-all uppercase font-bold ${allowRandomWalks
-              ? "bg-emerald-600/25 text-emerald-300 border-emerald-500/40"
-              : "text-slate-500 border-slate-800 hover:text-white"
+            ? "bg-emerald-600/25 text-emerald-300 border-emerald-500/40"
+            : "text-slate-500 border-slate-800 hover:text-white"
             }`}
           id="toggle-roaming-agents"
           title="Toggle automatic random roaming / walks for office agents"
@@ -1590,8 +1590,8 @@ export default function Office3DCanvas({
         <button
           onClick={() => setCinematicEffects((c) => !c)}
           className={`px-2.5 py-1 text-[8px] font-mono tracking-wider border rounded-lg transition-all uppercase font-bold ${cinematicEffects
-              ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40"
-              : "text-slate-500 border-slate-800 hover:text-white"
+            ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40"
+            : "text-slate-500 border-slate-800 hover:text-white"
             }`}
           id="toggle-cinematic-fx"
           title="Toggle soft drifting cinematic rotate camera effect"
@@ -1656,17 +1656,14 @@ export default function Office3DCanvas({
 
       {/* Informative guidelines HUD */}
       {showHelpers && (
-        <div className={`absolute bottom-4 right-4 p-3 rounded-xl border max-w-xs transition-opacity z-10 shadow-2xl ${isMatrix
-            ? "border-green-500/20 bg-black/95 text-green-400 font-mono text-[9px]"
-            : "border-white/10 bg-slate-950/95 text-slate-300 text-[10px]"
+        <div className={`absolute bottom-4 right-4 pt-1 pb-1 p-2 rounded-xl border max-w-xs transition-opacity z-10 shadow-2xl ${isMatrix
+          ? "border-green-500/20 bg-black/95 text-green-400 font-mono text-[9px]"
+          : "border-white/10 bg-slate-950/95 text-slate-300 text-[10px]"
           }`}>
           <div className="flex items-center gap-1 text-white font-extrabold uppercase text-[9px] tracking-wider mb-1">
             <Sparkles className="w-3.5 h-3.5 text-[#fbbf24] animate-pulse" />
-            <span>WebGL Real-Time Workspace:</span>
+            <span>Real-Time Workspace</span>
           </div>
-          <p className="leading-relaxed opacity-85">
-            Cute 3D avatars on task chairs working dynamically! Every loop, watch golden delegation packets sail along active parabolic curves between coworker nodes!
-          </p>
         </div>
       )}
 
