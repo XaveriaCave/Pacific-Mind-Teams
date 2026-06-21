@@ -84,6 +84,7 @@ export default function App() {
 
   // Refs for auto-scrolling
   const terminalBottomRef = useRef<HTMLDivElement>(null);
+  const isInitialLoad = useRef(true);
 
   // 3. Initialize/Load persistent blueprint state (Hydrates from localStorage)
   useEffect(() => {
@@ -361,6 +362,14 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Prevent auto-scrolling to the bottom upon initial load or storage hydration
+    if (isInitialLoad.current) {
+      const timer = setTimeout(() => {
+        isInitialLoad.current = false;
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
     terminalBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isRunning]);
 
@@ -397,12 +406,29 @@ export default function App() {
         }),
       });
 
+      const contentType = response.headers.get("content-type") || "";
+      let stepData: any;
+
       if (!response.ok) {
-        const errorJson = await response.json();
-        throw new Error(errorJson.error || "Workspace connection failure from server.");
+        if (contentType.includes("application/json")) {
+          const errorJson = await response.json();
+          throw new Error(errorJson.error || `Server responded with status ${response.status}`);
+        } else {
+          const textError = await response.text();
+          const match = textError.match(/<title>([\s\S]*?)<\/title>/i);
+          const htmlTitle = match ? match[1].trim() : "";
+          throw new Error(
+            `Server Error (HTTP ${response.status})${htmlTitle ? `: "${htmlTitle}"` : ""}`
+          );
+        }
       }
 
-      const stepData = await response.json();
+      if (contentType.includes("application/json")) {
+        stepData = await response.json();
+      } else {
+        const rawText = await response.text();
+        throw new Error(`Expected JSON but got content-type "${contentType}": ${rawText.substring(0, 100)}`);
+      }
 
       if (stepData.error) {
         throw new Error(stepData.error);

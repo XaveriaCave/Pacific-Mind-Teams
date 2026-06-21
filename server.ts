@@ -143,9 +143,17 @@ Remember, do not invent new agents to delegate to. Only use of the IDs list prov
       });
 
     } catch (error: any) {
-      console.error("Simulation error status: ", error);
+      console.error("[Simulator Server] Step Simulation error status:", error);
       res.status(500).json({ error: error?.message || "Internal server error conducting simulation step." });
     }
+  });
+
+  // Ensure any JSON syntax errors or downstream handler errors return JSON and not Express HTML pages
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("[Simulator Server] Express Application Error:", err);
+    res.status(err.status || 500).json({
+      error: err.message || "An unexpected system error occurred on the custom team simulation server."
+    });
   });
 
   // Serve static files in production & bundle Vite middleware in development
@@ -168,5 +176,13 @@ Remember, do not invent new agents to delegate to. Only use of the IDs list prov
     console.log(`[Simulator Server] Running on http://localhost:${PORT}`);
   });
 }
+
+// Global safety capture to prevent container/process crashes on unhandled rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[Simulator Server] Critical Unhandled Rejection at:", promise, "reason:", reason);
+});
+process.on("uncaughtException", (error) => {
+  console.error("[Simulator Server] Critical Uncaught Exception:", error);
+});
 
 startServer();

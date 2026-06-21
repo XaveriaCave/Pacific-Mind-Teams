@@ -362,8 +362,9 @@ export default function Office2DCanvas({
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Furniture stamp toolbar panel */}
-      <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${timeMode === "matrix" ? "border-green-500/20 bg-slate-950 text-green-300" : "border-slate-200 bg-white text-slate-800"
-        }`}>
+      <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
+        timeMode === "matrix" ? "border-green-500/20 bg-slate-950 text-green-300" : "border-slate-200 bg-white text-slate-800"
+      }`}>
         <div className="flex items-center gap-2">
           <Grid className="w-4 h-4 text-indigo-400" />
           <h4 className="text-xs font-extrabold uppercase tracking-wider">
@@ -374,32 +375,36 @@ export default function Office2DCanvas({
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => setActiveStampTool("plant")}
-            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${activeStampTool === "plant" ? "bg-emerald-600 text-white border-emerald-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
-              }`}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "plant" ? "bg-emerald-600 text-white border-emerald-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
             id="btn-stamp-plant"
           >
             🪴 Plant
           </button>
           <button
             onClick={() => setActiveStampTool("coffee")}
-            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${activeStampTool === "coffee" ? "bg-amber-600 text-white border-amber-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
-              }`}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "coffee" ? "bg-amber-600 text-white border-amber-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
             id="btn-stamp-coffee"
           >
             ☕ Coffee Station
           </button>
           <button
             onClick={() => setActiveStampTool("cooler")}
-            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${activeStampTool === "cooler" ? "bg-blue-600 text-white border-blue-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
-              }`}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "cooler" ? "bg-blue-600 text-white border-blue-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
             id="btn-stamp-cooler"
           >
             💧 Water Dispenser
           </button>
           <button
             onClick={() => setActiveStampTool("couch")}
-            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${activeStampTool === "couch" ? "bg-indigo-650 text-white border-indigo-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
-              }`}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "couch" ? "bg-indigo-650 text-white border-indigo-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
             id="btn-stamp-couch"
           >
             🛋️ Lounge Couch
@@ -420,8 +425,9 @@ export default function Office2DCanvas({
       {/* Main Canvas view */}
       <div
         ref={containerRef}
-        className={`w-full aspect-square border rounded-xl overflow-hidden shadow-xl flex items-center justify-center relative ${timeMode === "matrix" ? "border-green-500/30 bg-[#02040a]" : "border-slate-200 bg-slate-50"
-          }`}
+        className={`w-full aspect-square border rounded-xl overflow-hidden shadow-xl flex items-center justify-center relative ${
+          timeMode === "matrix" ? "border-green-500/30 bg-[#02040a]" : "border-slate-200 bg-slate-50"
+        }`}
       >
         <div className="absolute top-3 left-3 pointer-events-none flex flex-col gap-1 z-10">
           <span className="text-[10px] uppercase font-mono tracking-widest text-slate-500">
@@ -434,7 +440,7 @@ export default function Office2DCanvas({
           </span>
         </div>
 
-        <canvas
+         <canvas
           ref={canvasRef}
           width={dimensions.width}
           height={dimensions.height}
