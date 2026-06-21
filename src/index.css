@@ -5,9 +5,13 @@
         color-mix(in oklab, #c3c4cb 70%, transparent);
 }
 
-@supports (color:color-mix(in lab,red,red)) {
+@supports (color:color-mix(in lab, red, red)) {
     .bg-slate-900\/40 {
-        background-color: 
-color-mix(in oklab, oklch(0.93 0.04 268.32) 40%, transparent);
+        background-color:
+            color-mix(in oklab, oklch(0.93 0.04 268.32) 40%, transparent);
     }
+}
+
+.bg-rose-650 {
+    background-color: var(--color-rose-700);
 }
