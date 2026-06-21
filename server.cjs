@@ -138,9 +138,15 @@ Remember, do not invent new agents to delegate to. Only use of the IDs list prov
         isDone
       });
     } catch (error) {
-      console.error("Simulation error status: ", error);
+      console.error("[Simulator Server] Step Simulation error status:", error);
       res.status(500).json({ error: error?.message || "Internal server error conducting simulation step." });
     }
+  });
+  app.use((err, req, res, next) => {
+    console.error("[Simulator Server] Express Application Error:", err);
+    res.status(err.status || 500).json({
+      error: err.message || "An unexpected system error occurred on the custom team simulation server."
+    });
   });
   if (process.env.NODE_ENV !== "production") {
     const vite = await (0, import_vite.createServer)({
@@ -160,5 +166,11 @@ Remember, do not invent new agents to delegate to. Only use of the IDs list prov
     console.log(`[Simulator Server] Running on http://localhost:${PORT}`);
   });
 }
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[Simulator Server] Critical Unhandled Rejection at:", promise, "reason:", reason);
+});
+process.on("uncaughtException", (error) => {
+  console.error("[Simulator Server] Critical Uncaught Exception:", error);
+});
 startServer();
 //# sourceMappingURL=server.cjs.map
