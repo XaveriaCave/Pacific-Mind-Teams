@@ -2,14 +2,14 @@ import React, { useRef, useEffect, useState, useLayoutEffect } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { AgentNode, TimeMode, DecorItem, Message } from "../types";
-import { 
-  Sparkles, 
-  RefreshCw, 
-  Eye, 
-  RotateCw, 
-  Move, 
-  ZoomIn, 
-  ZoomOut, 
+import {
+  Sparkles,
+  RefreshCw,
+  Eye,
+  RotateCw,
+  Move,
+  ZoomIn,
+  ZoomOut,
   Info,
   Layers,
   Moon,
@@ -92,7 +92,7 @@ export default function Office3DCanvas({
 
     setWalkingAgents((prev) => {
       const next = { ...prev };
-      
+
       // Select idle agents (agents not currently active walkers)
       const idleAgents = agents.filter((ag) => !next[ag.id]);
       if (idleAgents.length === 0) return prev;
@@ -202,7 +202,7 @@ export default function Office3DCanvas({
 
       setWalkingAgents((prev) => {
         const next = { ...prev };
-        
+
         // Advance active walkers
         Object.keys(next).forEach((id) => {
           const w = next[id];
@@ -263,7 +263,7 @@ export default function Office3DCanvas({
     const hairColors = [0x1a1510, 0x2c0600, 0xb84305, 0xe5c158, 0x5a504a];
     const clothesColors = [0x334155, 0x0f766e, 0xbe185d, 0x581c87, 0xc2410c, 0x0369a1, 0x14b8a6, 0x6366f1];
     const trouserColors = [0x1e293b, 0x334155, 0x475569, 0x111827];
-    
+
     return {
       skin: skinTones[charSum % skinTones.length],
       hairColor: hairColors[(charSum + 2) % hairColors.length],
@@ -372,7 +372,7 @@ export default function Office3DCanvas({
           cameraRef3d.current.position.x - controlsRef.current.target.x,
           cameraRef3d.current.position.z - controlsRef.current.target.z
         ).length();
-        
+
         // Stabilize drift zoom heights
         const targetHeight = 11 + Math.sin(elapsed * 0.1) * 0.5;
         cameraRef3d.current.position.x = controlsRef.current.target.x + Math.cos(driftAngle) * currentRadius * 0.999;
@@ -644,7 +644,7 @@ export default function Office3DCanvas({
     while (workspaceGroup.children.length > 0) {
       const obj = workspaceGroup.children[0];
       workspaceGroup.remove(obj);
-      
+
       obj.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           if (child.geometry) child.geometry.dispose();
@@ -769,7 +769,7 @@ export default function Office3DCanvas({
       });
 
       // Dual-Monitor Workstation Setup!
-      
+
       // 1. Laptop (Slick slate aluminum box block + open monitor lid, shifted to the left)
       const lapGroup = new THREE.Group();
       lapGroup.position.set(-0.22, 0.58, -0.05);
@@ -891,7 +891,7 @@ export default function Office3DCanvas({
     // 4. Populate Office Decor obstacles/comfort Items
     const plantPotMat = new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.8 }); // terracotta
     const foliageMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.9, flatShading: true });
-    
+
     decorItems.forEach((decor) => {
       const dx = (decor.x - center) * spacing;
       const dz = (decor.z - center) * spacing;
@@ -1075,7 +1075,7 @@ export default function Office3DCanvas({
         // Shelves
         const shelfGeo = new THREE.BoxGeometry(1.2, 0.04, 0.22);
         const shelfMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 });
-        
+
         const shelf1 = new THREE.Mesh(shelfGeo, shelfMat);
         shelf1.position.set(0, 0.65, -0.25);
         shelf1.castShadow = true;
@@ -1131,7 +1131,7 @@ export default function Office3DCanvas({
         // High-end oval/rectangular Executive Conference Table and Chairs
         const tableColor = 0x06748c; // Modern dark teal wood laminate
         const tableMat = new THREE.MeshStandardMaterial({ color: tableColor, roughness: 0.15, metalness: 0.1 });
-        
+
         // Table top
         const topGeo = new THREE.BoxGeometry(1.5, 0.06, 0.9);
         const topMesh = new THREE.Mesh(topGeo, tableMat);
@@ -1367,7 +1367,7 @@ export default function Office3DCanvas({
       // Black beads tiny eyes looking forward (+Z)
       const eyeGeo = new THREE.SphereGeometry(0.018, 8, 8);
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
-      
+
       const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
       leftEye.position.set(-0.045, 0.02, 0.115);
       head.add(leftEye);
@@ -1433,7 +1433,7 @@ export default function Office3DCanvas({
       if (ag.id === currentAgentId || ag.id === currentAgentId) {
         const ringGeo = new THREE.RingGeometry(0.24, 0.28, 16);
         const ringMat = new THREE.MeshBasicMaterial({
-          color: ag.id === currentAgentId ? 0x22c55e : 0xf59e0b, 
+          color: ag.id === currentAgentId ? 0x22c55e : 0xf59e0b,
           side: THREE.DoubleSide
         });
         const haloRing = new THREE.Mesh(ringGeo, ringMat);
@@ -1553,7 +1553,7 @@ export default function Office3DCanvas({
 
   return (
     <div ref={containerRef} className="relative w-full h-[525px] bg-[#0c0e18] rounded-2xl overflow-hidden border border-slate-900/50 flex flex-col justify-between shadow-inner">
-      
+
       {/* 3D Scene Interactive Overlay Controls */}
       <div className="absolute top-3 left-4 z-10 flex items-center gap-1.5 p-1 rounded-lg bg-slate-900/80 backdrop-blur-md border border-white/15 shadow-xl">
         <span className="text-[8px] font-extrabold uppercase text-[#6366f1] px-2 py-0.5 border-r border-white/10 tracking-widest font-mono">
@@ -1574,14 +1574,13 @@ export default function Office3DCanvas({
       )}
 
       {/* Real-Time Ambient Settings controls */}
-      <div className="absolute top-3 right-4 z-10 flex items-center gap-1.5">
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-1.5 cnvs-top">
         <button
           onClick={() => setAllowRandomWalks((w) => !w)}
-          className={`px-2.5 py-1 text-[8px] font-mono tracking-wider border rounded-lg transition-all uppercase font-bold ${
-            allowRandomWalks
+          className={`px-2.5 py-1 text-[8px] font-mono tracking-wider border rounded-lg transition-all uppercase font-bold ${allowRandomWalks
               ? "bg-emerald-600/25 text-emerald-300 border-emerald-500/40"
               : "text-slate-500 border-slate-800 hover:text-white"
-          }`}
+            }`}
           id="toggle-roaming-agents"
           title="Toggle automatic random roaming / walks for office agents"
         >
@@ -1590,11 +1589,10 @@ export default function Office3DCanvas({
 
         <button
           onClick={() => setCinematicEffects((c) => !c)}
-          className={`px-2.5 py-1 text-[8px] font-mono tracking-wider border rounded-lg transition-all uppercase font-bold ${
-            cinematicEffects
+          className={`px-2.5 py-1 text-[8px] font-mono tracking-wider border rounded-lg transition-all uppercase font-bold ${cinematicEffects
               ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40"
               : "text-slate-500 border-slate-800 hover:text-white"
-          }`}
+            }`}
           id="toggle-cinematic-fx"
           title="Toggle soft drifting cinematic rotate camera effect"
         >
@@ -1658,11 +1656,10 @@ export default function Office3DCanvas({
 
       {/* Informative guidelines HUD */}
       {showHelpers && (
-        <div className={`absolute bottom-4 right-4 p-3 rounded-xl border max-w-xs transition-opacity z-10 shadow-2xl ${
-          isMatrix
+        <div className={`absolute bottom-4 right-4 p-3 rounded-xl border max-w-xs transition-opacity z-10 shadow-2xl ${isMatrix
             ? "border-green-500/20 bg-black/95 text-green-400 font-mono text-[9px]"
             : "border-white/10 bg-slate-950/95 text-slate-300 text-[10px]"
-        }`}>
+          }`}>
           <div className="flex items-center gap-1 text-white font-extrabold uppercase text-[9px] tracking-wider mb-1">
             <Sparkles className="w-3.5 h-3.5 text-[#fbbf24] animate-pulse" />
             <span>WebGL Real-Time Workspace:</span>
