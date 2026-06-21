@@ -30,7 +30,7 @@ export default function Office2DCanvas({
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Currently selected item type to stamp click-to-place
-  const [activeStampTool, setActiveStampTool] = useState<"none" | "coffee" | "cooler" | "plant" | "couch">("none");
+  const [activeStampTool, setActiveStampTool] = useState<"none" | "coffee" | "cooler" | "plant" | "couch" | "wall" | "store" | "conference">("none");
 
   // Keep responsive fluid bounding container resize monitoring
   useLayoutEffect(() => {
@@ -193,6 +193,9 @@ export default function Office2DCanvas({
       if (decor.type === "coffee") iconText = "☕";
       if (decor.type === "cooler") iconText = "💧";
       if (decor.type === "plant") iconText = "🪴";
+      if (decor.type === "wall") iconText = "🧱";
+      if (decor.type === "store") iconText = "🏪";
+      if (decor.type === "conference") iconText = "👥";
 
       ctx.fillText(iconText, scr.x, scr.y);
     });
@@ -221,6 +224,20 @@ export default function Office2DCanvas({
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(scr.x, scr.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Draw a sleek small indicator dot representing chair/sitting side based on desk rotation
+      const rDeg = agent.deskRotation || 0;
+      const rRad = (rDeg * Math.PI) / 180;
+      const dotX = scr.x + Math.sin(rRad) * (radius - 1);
+      const dotY = scr.y + Math.cos(rRad) * (radius - 1);
+      
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#1e293b";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, Math.max(3, cellPix * 0.08), 0, Math.PI * 2);
+      ctx.fill();
       ctx.stroke();
 
       // Label name overlay tags
@@ -408,6 +425,33 @@ export default function Office2DCanvas({
             id="btn-stamp-couch"
           >
             🛋️ Lounge Couch
+          </button>
+          <button
+            onClick={() => setActiveStampTool("wall")}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "wall" ? "bg-slate-600 text-white border-slate-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
+            id="btn-stamp-wall"
+          >
+            🧱 Wall
+          </button>
+          <button
+            onClick={() => setActiveStampTool("store")}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "store" ? "bg-indigo-600 text-white border-indigo-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
+            id="btn-stamp-store"
+          >
+            🏪 Mini Store
+          </button>
+          <button
+            onClick={() => setActiveStampTool("conference")}
+            className={`px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 transition-colors ${
+              activeStampTool === "conference" ? "bg-cyan-600 text-white border-cyan-500" : "hover:bg-slate-800 hover:text-white border-slate-700/80"
+            }`}
+            id="btn-stamp-conference"
+          >
+            👥 Conference Desk
           </button>
 
           {activeStampTool !== "none" && (

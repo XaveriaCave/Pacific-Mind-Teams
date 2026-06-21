@@ -55,11 +55,16 @@ export default function Office3DCanvas({
   const [dimensions, setDimensions] = useState({ width: 700, height: 500 });
   const [showHelpers, setShowHelpers] = useState(true);
   const [cinematicEffects, setCinematicEffects] = useState(false);
-  const [allowRandomWalks, setAllowRandomWalks] = useState(false);
+  const [allowRandomWalks, setAllowRandomWalks] = useState(true);
   const [activeMotiveLabel, setActiveMotiveLabel] = useState<string | null>(null);
 
   // Keep track of continuous simulation walking states for the agents
   const [walkingAgents, setWalkingAgents] = useState<{ [id: string]: WalkingState }>({});
+  const walkingAgentsRef = useRef(walkingAgents);
+
+  useEffect(() => {
+    walkingAgentsRef.current = walkingAgents;
+  }, [walkingAgents]);
 
   // Monitor canvas resized dimension changes fluidly
   useLayoutEffect(() => {
@@ -79,17 +84,118 @@ export default function Office3DCanvas({
     return () => observer.disconnect();
   }, []);
 
-  const walkPhrases = [
-    "Delegating sub-tasks... 📈",
-    "Taking a coffee break! ☕",
-    "Extruding 3D geometry... 🕸️",
-    "Reviewing system performance! 📊",
-    "Pacing around... 🚶",
-    "Grabbing a glass of water... 💧",
-    "Refueling espresso... ☕",
-  ];
+  const [breakTimeLeft, setBreakTimeLeft] = useState(120);
 
-  // Random decision logic to spark walking animation cycles
+  // Helper function to trigger a randomized group of agents to seek setting nodes
+  const triggerAutomaticBreakGroup = () => {
+    if (agents.length === 0) return;
+
+    setWalkingAgents((prev) => {
+      const next = { ...prev };
+      
+      // Select idle agents (agents not currently active walkers)
+      const idleAgents = agents.filter((ag) => !next[ag.id]);
+      if (idleAgents.length === 0) return prev;
+
+      // Choose a random number of agents to go on break (between 1 and 3, clamped to count of idle agents)
+      const numAgentsToSelect = Math.min(idleAgents.length, Math.floor(Math.random() * 3) + 1);
+
+      // Shuffle candidates list
+      const shuffled = [...idleAgents].sort(() => 0.5 - Math.random());
+      const chosenAgents = shuffled.slice(0, numAgentsToSelect);
+
+      chosenAgents.forEach((ag) => {
+        // Build settings pool dynamically
+        const settings: Array<{ type: string; name: string; x: number; z: number }> = [];
+
+        // Decor items (Water Dispenser, Coffee Station, Mini Store, Plant, Couch, etc)
+        if (decorItems && decorItems.length > 0) {
+          decorItems.forEach((decor) => {
+            let label = "Office Object";
+            if (decor.type === "coffee") label = "Coffee Station";
+            if (decor.type === "cooler") label = "Water Dispenser";
+            if (decor.type === "plant") label = "Ficus Plant";
+            if (decor.type === "couch") label = "Lounge Couch";
+            if (decor.type === "wall") label = "Structural Wall";
+            if (decor.type === "store") label = "Convenience Store";
+            if (decor.type === "conference") label = "Conference Desk";
+
+            settings.push({
+              type: decor.type,
+              name: label,
+              x: decor.x,
+              z: decor.z,
+            });
+          });
+        }
+
+        let targetX = Math.floor(Math.random() * gridSize);
+        let targetZ = Math.floor(Math.random() * gridSize);
+        let motive = "Pacing around... 🚶";
+
+        if (settings.length > 0) {
+          const pickedSetting = settings[Math.floor(Math.random() * settings.length)];
+          targetX = pickedSetting.x;
+          targetZ = pickedSetting.z;
+
+          if (pickedSetting.type === "coffee") {
+            motive = "Getting espresso refueled... ☕";
+          } else if (pickedSetting.type === "cooler") {
+            motive = "Chilled cooler beverage break! 💧";
+          } else if (pickedSetting.type === "plant") {
+            motive = "Admiring office plant green... 🪴";
+          } else if (pickedSetting.type === "couch") {
+            motive = "Lounging for creative brainstorming... 🛋️";
+          } else if (pickedSetting.type === "wall") {
+            motive = "Inspecting wall building partition... 🧱";
+          } else if (pickedSetting.type === "store") {
+            motive = "Grabbing snack at Mini Store... 🏪";
+          } else if (pickedSetting.type === "conference") {
+            motive = "Attending executive meeting at Conference Table... 👥";
+          }
+        }
+
+        // Clamp values to valid bounds of the grid
+        targetX = Math.max(0, Math.min(gridSize - 1, targetX));
+        targetZ = Math.max(0, Math.min(gridSize - 1, targetZ));
+
+        next[ag.id] = {
+          agentId: ag.id,
+          homeX: ag.gridPosition.x,
+          homeZ: ag.gridPosition.z,
+          targetX: targetX,
+          targetZ: targetZ,
+          currentX: ag.gridPosition.x,
+          currentZ: ag.gridPosition.z,
+          progress: 0,
+          phase: "to_target",
+          dwellTimeLeft: 120, // frames
+          reasonCode: motive,
+        };
+      });
+
+      return next;
+    });
+  };
+
+  // 1. One-second interval Countdown timer hook for automatic swarm break scheduling
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBreakTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (allowRandomWalks) {
+            triggerAutomaticBreakGroup();
+          }
+          return 120; // reset to 2 minutes
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [allowRandomWalks, agents, decorItems, gridSize]);
+
+  // 2. Continuous 100ms pathing updates to move agents in WebGL view
   useEffect(() => {
     const interval = setInterval(() => {
       if (agents.length === 0) return;
@@ -97,57 +203,6 @@ export default function Office3DCanvas({
       setWalkingAgents((prev) => {
         const next = { ...prev };
         
-        // Let's decide if some idle agent should walk if allowed
-        if (allowRandomWalks) {
-          agents.forEach((ag) => {
-            if (ag.state !== "idle") return;
-            if (next[ag.id]) return; // already walking
-
-            // 1.5% chance per evaluation interval to walk "here and there"
-            if (Math.random() < 0.015) {
-              let tx = Math.floor(Math.random() * gridSize);
-              let tz = Math.floor(Math.random() * gridSize);
-              let motive = "Pacing around... 🚶";
-
-              if (Math.random() < 0.5 && agents.length > 1) {
-                const otherAgList = agents.filter((other) => other.id !== ag.id);
-                const targetCoWorker = otherAgList[Math.floor(Math.random() * otherAgList.length)];
-                tx = targetCoWorker.gridPosition.x;
-                tz = targetCoWorker.gridPosition.z;
-                motive = `Brainstorm with ${targetCoWorker.name.split(" ")[0]}! 🗣️`;
-              } else if (decorItems && decorItems.length > 0) {
-                const randomDecor = decorItems[Math.floor(Math.random() * decorItems.length)];
-                tx = randomDecor.x;
-                tz = randomDecor.z;
-                if (randomDecor.type === "coffee") motive = "Refueling espresso... ☕";
-                if (randomDecor.type === "cooler") motive = "Water Break! 💧";
-                if (randomDecor.type === "plant") motive = "Inspecting office botany... 🪴";
-                if (randomDecor.type === "couch") motive = "Creative lounging! 🛋️";
-              } else {
-                motive = walkPhrases[Math.floor(Math.random() * walkPhrases.length)];
-              }
-
-              // Clamping coordinates
-              tx = Math.max(1, Math.min(gridSize - 2, tx));
-              tz = Math.max(1, Math.min(gridSize - 2, tz));
-
-              next[ag.id] = {
-                agentId: ag.id,
-                homeX: ag.gridPosition.x,
-                homeZ: ag.gridPosition.z,
-                targetX: tx,
-                targetZ: tz,
-                currentX: ag.gridPosition.x,
-                currentZ: ag.gridPosition.z,
-                progress: 0,
-                phase: "to_target",
-                dwellTimeLeft: 120, // steps (frames)
-                reasonCode: motive,
-              };
-            }
-          });
-        }
-
         // Advance active walkers
         Object.keys(next).forEach((id) => {
           const w = next[id];
@@ -174,7 +229,7 @@ export default function Office3DCanvas({
               w.progress = 1.0;
               w.currentX = w.homeX;
               w.currentZ = w.homeZ;
-              delete next[id]; // reach home base, clean up node
+              delete next[id]; // reached home base, clean up node
             } else {
               w.currentX = w.targetX + (w.homeX - w.targetX) * w.progress;
               w.currentZ = w.targetZ + (w.homeZ - w.targetZ) * w.progress;
@@ -187,7 +242,7 @@ export default function Office3DCanvas({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [agents, decorItems, gridSize]);
+  }, [agents, gridSize]);
 
   // Keep track of active helper reference to notify on walking changes
   useEffect(() => {
@@ -352,13 +407,90 @@ export default function Office3DCanvas({
             let z = ag ? ag.gridPosition.z : 0;
 
             // Read walking override state
-            const walker = walkingAgents[agentId];
-            const isSitting = !walker || walker.phase === "dwelling";
+            const walker = walkingAgentsRef.current[agentId];
 
             if (walker) {
               x = walker.currentX;
               z = walker.currentZ;
             }
+
+            const currentCellX = Math.round(x);
+            const currentCellZ = Math.round(z);
+            const decorAtCell = decorItems.find(
+              (d) => Math.round(d.x) === currentCellX && Math.round(d.z) === currentCellZ
+            );
+
+            // Determine if they are resting/dwelling at this tile location
+            const isOccupyingCell = !walker || walker.phase === "dwelling";
+
+            let offsetX = 0;
+            let offsetZ = 0;
+            let rotationOverride: number | null = null;
+            let forceSitting = false;
+            let forceStanding = false;
+
+            const deskRotRad = ((ag?.deskRotation || 0) * Math.PI) / 180;
+
+            if (isOccupyingCell) {
+              if (decorAtCell) {
+                // Find all active agent meshes currently dwelling at identical cell coords
+                const occupiers = agents
+                  .filter((otherAg) => {
+                    const otherWalker = walkingAgentsRef.current[otherAg.id];
+                    const ox = otherWalker ? otherWalker.currentX : otherAg.gridPosition.x;
+                    const oz = otherWalker ? otherWalker.currentZ : otherAg.gridPosition.z;
+                    const isOtherOccupying = !otherWalker || otherWalker.phase === "dwelling";
+                    return isOtherOccupying && Math.round(ox) === currentCellX && Math.round(oz) === currentCellZ;
+                  })
+                  .map((otherAg) => otherAg.id)
+                  .sort();
+
+                const occupantIndex = Math.max(0, occupiers.indexOf(agentId));
+
+                if (decorAtCell.type === "conference") {
+                  forceSitting = true;
+                  const chairPositions = [
+                    { x: -0.6, z: 0, rotY: Math.PI / 2 },
+                    { x: 0.6, z: 0, rotY: -Math.PI / 2 },
+                    { x: 0, z: -0.4, rotY: 0 },
+                    { x: 0, z: 0.4, rotY: Math.PI }
+                  ];
+                  const pos = chairPositions[occupantIndex % 4];
+                  offsetX = pos.x;
+                  offsetZ = pos.z;
+                  rotationOverride = pos.rotY;
+                } else if (decorAtCell.type === "couch") {
+                  forceSitting = true;
+                  const couchPositions = [
+                    { x: -0.5, z: -0.06, rotY: 0 },
+                    { x: 0, z: -0.06, rotY: 0 },
+                    { x: 0.5, z: -0.06, rotY: 0 }
+                  ];
+                  const pos = couchPositions[occupantIndex % 3];
+                  offsetX = pos.x;
+                  offsetZ = pos.z;
+                  rotationOverride = pos.rotY;
+                } else {
+                  // Standing items: coffee, cooler, plant, store, etc.
+                  forceStanding = true;
+                  const count = occupiers.length || 1;
+                  const angle = (occupantIndex * (2 * Math.PI)) / count;
+                  const radius = 0.35;
+                  offsetX = Math.sin(angle) * radius;
+                  offsetZ = Math.cos(angle) * radius;
+                  rotationOverride = angle + Math.PI; // Face inward towards center
+                }
+              } else {
+                // Personal home desk
+                offsetX = Math.sin(deskRotRad) * 0.35;
+                offsetZ = Math.cos(deskRotRad) * 0.35;
+              }
+            }
+
+            // Decide whether they should be rendered sitting or standing
+            let isSitting = !walker || walker.phase === "dwelling";
+            if (forceSitting) isSitting = true;
+            if (forceStanding) isSitting = false;
 
             const leftLeg = mesh.getObjectByName("left-leg");
             const rightLeg = mesh.getObjectByName("right-leg");
@@ -421,9 +553,8 @@ export default function Office3DCanvas({
               }
             }
 
-            const targetWorldX = (x - centerVal) * spacingVal;
-            // Shift back by +0.35 in global Z ONLY when sitting on chair!
-            const targetWorldZ = (z - centerVal) * spacingVal + (isSitting ? 0.35 : 0.0);
+            const targetWorldX = (x - centerVal) * spacingVal + offsetX;
+            const targetWorldZ = (z - centerVal) * spacingVal + offsetZ;
 
             // Interpolate position smoothly to remove snap stutters
             mesh.position.x += (targetWorldX - mesh.position.x) * 0.35;
@@ -440,8 +571,9 @@ export default function Office3DCanvas({
               while (diff > Math.PI) diff -= Math.PI * 2;
               mesh.rotation.y += diff * 0.2;
             } else {
-              // Sit-typing face direction towards desk on -Z axis (which corresponds to Math.PI angle)
-              let diff = Math.PI - mesh.rotation.y;
+              // Use designated tile-specific face rotation or fallback to standard wood desk orientation
+              const rotTarget = rotationOverride !== null ? rotationOverride : (Math.PI + deskRotRad);
+              let diff = rotTarget - mesh.rotation.y;
               while (diff < -Math.PI) diff += Math.PI * 2;
               while (diff > Math.PI) diff -= Math.PI * 2;
               mesh.rotation.y += diff * 0.12;
@@ -609,6 +741,8 @@ export default function Office3DCanvas({
       // Group layout containing one complete workstation
       const station = new THREE.Group();
       station.position.set(wx, 0, wz);
+      const deskRotDeg = ag.deskRotation || 0;
+      station.rotation.y = (deskRotDeg * Math.PI) / 180;
       workspaceGroup.add(station);
 
       // Desk Top
@@ -897,6 +1031,172 @@ export default function Office3DCanvas({
         backRest.position.set(0, 0.48, -0.27);
         backRest.castShadow = true;
         itemGroup.add(backRest);
+      } else if (decor.type === "wall") {
+        // Structural wall segment partition
+        const wallColor = timeMode === "matrix" ? 0x052e16 : (timeMode === "night" ? 0x1e293b : 0xe2e8f0);
+        const wallMat = new THREE.MeshStandardMaterial({
+          color: wallColor,
+          roughness: 0.6,
+          metalness: 0.1
+        });
+        const wallGeo = new THREE.BoxGeometry(1.6, 1.4, 0.25);
+        const wallSegment = new THREE.Mesh(wallGeo, wallMat);
+        wallSegment.position.set(0, 0.7, 0);
+        wallSegment.castShadow = true;
+        wallSegment.receiveShadow = true;
+        itemGroup.add(wallSegment);
+
+        // Highlight/Trim top cap
+        const capColor = timeMode === "matrix" ? 0x22c55e : (timeMode === "night" ? 0x6366f1 : 0x4f46e5);
+        const capMat = new THREE.MeshStandardMaterial({ color: capColor, roughness: 0.4 });
+        const capGeo = new THREE.BoxGeometry(1.64, 0.06, 0.29);
+        const capSegment = new THREE.Mesh(capGeo, capMat);
+        capSegment.position.set(0, 1.43, 0);
+        capSegment.castShadow = true;
+        itemGroup.add(capSegment);
+      } else if (decor.type === "store") {
+        // Cute interior convenience kiosk / micro-store with item slots
+        const kioskBaseGeo = new THREE.BoxGeometry(1.4, 0.6, 1.0);
+        const kioskBaseMat = new THREE.MeshStandardMaterial({ color: 0x312e81, roughness: 0.5 });
+        const kioskBase = new THREE.Mesh(kioskBaseGeo, kioskBaseMat);
+        kioskBase.position.set(0, 0.3, 0);
+        kioskBase.castShadow = true;
+        kioskBase.receiveShadow = true;
+        itemGroup.add(kioskBase);
+
+        // Shelves Back wall
+        const backWallGeo = new THREE.BoxGeometry(1.4, 1.3, 0.12);
+        const backWallMat = new THREE.MeshStandardMaterial({ color: 0x4f46e5, roughness: 0.7 });
+        const backWall = new THREE.Mesh(backWallGeo, backWallMat);
+        backWall.position.set(0, 0.95, -0.44);
+        backWall.castShadow = true;
+        itemGroup.add(backWall);
+
+        // Shelves
+        const shelfGeo = new THREE.BoxGeometry(1.2, 0.04, 0.22);
+        const shelfMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 });
+        
+        const shelf1 = new THREE.Mesh(shelfGeo, shelfMat);
+        shelf1.position.set(0, 0.65, -0.25);
+        shelf1.castShadow = true;
+        itemGroup.add(shelf1);
+
+        const shelf2 = new THREE.Mesh(shelfGeo, shelfMat);
+        shelf2.position.set(0, 1.05, -0.25);
+        shelf2.castShadow = true;
+        itemGroup.add(shelf2);
+
+        // Miniature food packages / books
+        const itemColors = [0xef4444, 0x10b981, 0x3b82f6, 0xf59e0b, 0xec4899];
+        for (let i = 0; i < 4; i++) {
+          const pColor = itemColors[i % itemColors.length];
+          const prodGeo = new THREE.BoxGeometry(0.12, 0.16, 0.1);
+          const prodMat = new THREE.MeshStandardMaterial({ color: pColor, roughness: 0.4 });
+          const prod = new THREE.Mesh(prodGeo, prodMat);
+          prod.position.set(-0.45 + i * 0.3, 0.75, -0.15);
+          prod.castShadow = true;
+          itemGroup.add(prod);
+        }
+
+        // Cash register on counter top
+        const regBaseGeo = new THREE.BoxGeometry(0.16, 0.02, 0.16);
+        const regBase = new THREE.Mesh(regBaseGeo, steelMat);
+        regBase.position.set(-0.3, 0.61, 0.2);
+        regBase.castShadow = true;
+        itemGroup.add(regBase);
+
+        const regScreenGeo = new THREE.BoxGeometry(0.14, 0.1, 0.015);
+        const regScreenMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.1 });
+        const regScreen = new THREE.Mesh(regScreenGeo, regScreenMat);
+        regScreen.position.set(-0.3, 0.69, 0.2);
+        regScreen.rotation.x = -0.4;
+        regScreen.castShadow = true;
+        itemGroup.add(regScreen);
+
+        // Header store sign plate
+        const signGeo = new THREE.BoxGeometry(1.2, 0.25, 0.08);
+        const signMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+        const signBoard = new THREE.Mesh(signGeo, signMat);
+        signBoard.position.set(0, 1.7, -0.44);
+        signBoard.castShadow = true;
+        itemGroup.add(signBoard);
+
+        // Neon branding sign line
+        const neonGeo = new THREE.BoxGeometry(1.0, 0.05, 0.1);
+        const neonMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+        const neonBar = new THREE.Mesh(neonGeo, neonMat);
+        neonBar.position.set(0, 1.7, -0.38);
+        itemGroup.add(neonBar);
+      } else if (decor.type === "conference") {
+        // High-end oval/rectangular Executive Conference Table and Chairs
+        const tableColor = 0x06748c; // Modern dark teal wood laminate
+        const tableMat = new THREE.MeshStandardMaterial({ color: tableColor, roughness: 0.15, metalness: 0.1 });
+        
+        // Table top
+        const topGeo = new THREE.BoxGeometry(1.5, 0.06, 0.9);
+        const topMesh = new THREE.Mesh(topGeo, tableMat);
+        topMesh.position.set(0, 0.65, 0);
+        topMesh.castShadow = true;
+        topMesh.receiveShadow = true;
+        itemGroup.add(topMesh);
+
+        // Center support legs
+        const legGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.62, 8);
+        const leg1 = new THREE.Mesh(legGeo, steelMat);
+        leg1.position.set(-0.45, 0.31, 0);
+        leg1.castShadow = true;
+        itemGroup.add(leg1);
+
+        const leg2 = new THREE.Mesh(legGeo, steelMat);
+        leg2.position.set(0.45, 0.31, 0);
+        leg2.castShadow = true;
+        itemGroup.add(leg2);
+
+        // Surrounding conference chairs
+        const chairSeatGeo = new THREE.BoxGeometry(0.28, 0.04, 0.28);
+        const chairBackGeo = new THREE.BoxGeometry(0.28, 0.34, 0.04);
+        const leatherColor = 0x1f2937; // Charcoal office leather seat
+        const blackLeatherMat = new THREE.MeshStandardMaterial({ color: leatherColor, roughness: 0.75 });
+
+        const chairPositions = [
+          { x: -0.6, z: 0, rotY: Math.PI / 2 },
+          { x: 0.6, z: 0, rotY: -Math.PI / 2 },
+          { x: 0, z: -0.4, rotY: 0 },
+          { x: 0, z: 0.4, rotY: Math.PI }
+        ];
+
+        chairPositions.forEach((pos) => {
+          const chairGroup = new THREE.Group();
+          chairGroup.position.set(pos.x, 0, pos.z);
+          chairGroup.rotation.y = pos.rotY;
+
+          // Central column
+          const stemGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.35, 6);
+          const stem = new THREE.Mesh(stemGeo, steelMat);
+          stem.position.set(0, 0.175, 0);
+          stem.castShadow = true;
+          chairGroup.add(stem);
+
+          // Star base
+          const baseGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.03, 8);
+          const base = new THREE.Mesh(baseGeo, steelMat);
+          base.position.set(0, 0.015, 0);
+          chairGroup.add(base);
+
+          // Cushion
+          const seat = new THREE.Mesh(chairSeatGeo, blackLeatherMat);
+          seat.position.set(0, 0.36, 0);
+          seat.castShadow = true;
+          chairGroup.add(seat);
+
+          // Backrest
+          const back = new THREE.Mesh(chairBackGeo, blackLeatherMat);
+          back.position.set(0, 0.52, -0.12);
+          back.castShadow = true;
+          chairGroup.add(back);
+
+          itemGroup.add(chairGroup);
+        });
       }
     });
 
@@ -1319,15 +1619,40 @@ export default function Office3DCanvas({
       />
 
       {/* Action / Reset Floating footer panel */}
-      <div className="absolute bottom-4 left-4 z-10 flex items-center gap-1.5">
+      <div className="absolute bottom-4 left-4 z-10 flex flex-wrap items-center gap-2">
         <button
           onClick={handleResetCamera}
           className="px-3 py-1.5 bg-slate-900 border border-white/10 text-slate-300 hover:text-white hover:border-slate-700 text-[9px] uppercase font-bold rounded-lg flex items-center gap-1 shadow-lg transition-all"
           title="Reset zoom and rotation target"
           id="hud-reset-cam"
         >
-          <RefreshCw className="w-2.5 h-2.5 animate-spin-slow" />
+          <RefreshCw className="w-2.5 h-2.5" />
           Center Camera
+        </button>
+
+        {/* Dynamic Break Timer Badge */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-indigo-500/35 rounded-lg text-[9px] font-mono tracking-wider font-bold shadow-lg">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping shrink-0" />
+          <span className="text-slate-400 uppercase">Swarm Break:</span>
+          <span className="text-indigo-400">
+            {Math.floor(breakTimeLeft / 60)}:{(breakTimeLeft % 60).toString().padStart(2, "0")}
+          </span>
+          {allowRandomWalks && (
+            <span className="text-[7.5px] text-emerald-400 font-sans font-extrabold uppercase ml-1 px-1 bg-emerald-500/10 rounded">Auto</span>
+          )}
+        </div>
+
+        {/* Manual Group break trigger */}
+        <button
+          onClick={() => {
+            triggerAutomaticBreakGroup();
+            setBreakTimeLeft(120);
+          }}
+          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/40 text-[9px] uppercase font-bold rounded-lg flex items-center gap-1.5 shadow-lg transition-all"
+          title="Force a random set of 1-3 agents to wander to office settings and come back"
+          id="btn-manual-break"
+        >
+          <span>🔔 Trigger Group Break</span>
         </button>
       </div>
 

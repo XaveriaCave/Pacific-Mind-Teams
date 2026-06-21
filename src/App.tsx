@@ -81,6 +81,7 @@ export default function App() {
   const [currentAgentId, setCurrentAgentId] = useState<string | null>(null);
   const [simulationStep, setSimulationStep] = useState(0);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [consecutiveTurns, setConsecutiveTurns] = useState(0);
 
   // Refs for auto-scrolling
   const terminalBottomRef = useRef<HTMLDivElement>(null);
@@ -375,6 +376,24 @@ export default function App() {
 
   const executeSimulationStep = async () => {
     if (agents.length === 0) return;
+
+    if (consecutiveTurns >= 15) {
+      setErrorText("⚠️ Autonomous Safety Cutoff: Stopped at 15 consecutive simulation steps to prevent infinite loop billing or runaway agent execution. Click 'Run' to resume.");
+      setIsRunning(false);
+      setTeams((prevTeams) =>
+        prevTeams.map((t) => {
+          if (t.id === activeTeamId) {
+            return {
+              ...t,
+              agents: t.agents.map((a) => ({ ...a, state: "idle" as const }))
+            };
+          }
+          return t;
+        })
+      );
+      return;
+    }
+
     const speakerId = currentAgentId || agents[0].id;
 
     setErrorText(null);
@@ -448,6 +467,7 @@ export default function App() {
       const updatedHistory = [...messages, formattedMsg];
       setMessages(updatedHistory);
       setSimulationStep((prev) => prev + 1);
+      setConsecutiveTurns((prev) => prev + 1);
 
       if (stepData.delegateId) {
         const targetExist = agents.some((a) => a.id === stepData.delegateId);
@@ -512,6 +532,12 @@ export default function App() {
 
     return () => clearTimeout(loopTimeout);
   }, [isRunning, currentAgentId]);
+
+  useEffect(() => {
+    if (!isRunning) {
+      setConsecutiveTurns(0);
+    }
+  }, [isRunning]);
 
   const handleExportBlueprint = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(

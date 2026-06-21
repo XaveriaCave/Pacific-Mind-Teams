@@ -38,6 +38,7 @@ export default function AgentPanel({
   const [systemPrompt, setSystemPrompt] = useState("");
   const [avatarColor, setAvatarColor] = useState("#60a5fa");
   const [gender, setGender] = useState<"male" | "female">("male");
+  const [deskRotation, setDeskRotation] = useState<number>(0);
 
   // New Custom Agent state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -54,6 +55,7 @@ export default function AgentPanel({
       setSystemPrompt(selectedAgent.systemPrompt);
       setAvatarColor(selectedAgent.avatarColor || "#60a5fa");
       setGender(selectedAgent.gender || "male");
+      setDeskRotation(selectedAgent.deskRotation || 0);
     }
   }, [selectedAgent]);
 
@@ -67,6 +69,7 @@ export default function AgentPanel({
       systemPrompt,
       avatarColor,
       gender,
+      deskRotation,
     });
   };
 
@@ -422,6 +425,39 @@ export default function AgentPanel({
                   >
                     ♀ Female
                   </button>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-[10px] uppercase font-extrabold mb-1 ${
+                  isMatrix ? "text-green-500" : isNight ? "text-slate-400" : "text-slate-900 text-black"
+                } ${isBusy ? "opacity-60" : ""}`}>
+                  Desk Rotation on Tile {isBusy && "🔒"}
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[0, 90, 180, 270].map((deg) => (
+                    <button
+                      key={deg}
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => setDeskRotation(deg)}
+                      className={`py-1.5 px-1 text-xs rounded border transition-all font-semibold uppercase ${
+                        isBusy ? "cursor-not-allowed opacity-50" : ""
+                      } ${
+                        deskRotation === deg
+                          ? isMatrix
+                            ? "bg-green-600 text-black border-green-500"
+                            : "bg-indigo-600 text-white border-indigo-500 shadow"
+                          : isMatrix
+                          ? "bg-black text-green-500 border-green-500/30 hover:bg-green-500/10"
+                          : isNight
+                          ? "bg-slate-950 text-slate-400 border-slate-700 hover:text-white"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {deg}°
+                    </button>
+                  ))}
                 </div>
               </div>
 

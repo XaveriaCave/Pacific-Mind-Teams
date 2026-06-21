@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -83,19 +83,11 @@ Historical Conversation Progress:
 ${formattedHistory}
 ---
 
-Your Instructions for this turn:
-1. Review the overall objective and what former agents have shared.
-2. Execute your specific subtask, reasoning, or feedback related to your role. Be highly detailed, constructive, and realistic.
-3. At the very end of your response, you MUST delegate the next turn to exactly one of the active team members (including yourself if more work is needed on your end, or another agent), by appending a specific line in exactly this format:
-   Delegation: [Agent Name] ([Agent ID]) - [Your direct task context/instruction for them]
-   
-   Example of delegation line:
-   Delegation: Developer Agent (dev-uuid-123) - Please write the code outline for the API routes.
-
-4. If you believe the global task has been successfully and fully completed (with all summaries, codes, or reviews finalized), and no further steps are needed, output:
-   Delegation: Done - Object general task finished.
-
-Remember, do not invent new agents to delegate to. Only use of the IDs list provided.`;
+Create a highly detailed step execution report matching your role. You MUST output a structured JSON response keys and values as defined by the response schema.
+Keys:
+- "content": (string) Your complete analytical/execution text (plans, reasoning, code snippets, final output, reviews, or responses to previous messages). Be thorough, descriptive, and highly functional.
+- "delegateId": (string) The ID of the single active team member to handle the next step (from the list of IDs above: ${agents.map((a: any) => `"${a.id}"`).join(", ")}). If you believe the entire team objective is successfully completed and no further actions are required, you MUST specify the literal string "done".
+- "delegationTaskInstruction": (string) Specific, constructive directions or task details you are assigning to the delegated teammate, or a completion summary describing the total final output if delegateId is "done".`;
 
       const response = await requestAi.models.generateContent({
         model: modelToUse,
@@ -103,37 +95,89 @@ Remember, do not invent new agents to delegate to. Only use of the IDs list prov
         config: {
           systemInstruction: systemInstruction,
           temperature: 0.7,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              content: {
+                type: Type.STRING,
+                description: "Thorough response content. Detailed reasoning, decisions, outputs, or code.",
+              },
+              delegateId: {
+                type: Type.STRING,
+                description: "Select an ID from the list. If everything is fully resolved, set to 'done'.",
+              },
+              delegationTaskInstruction: {
+                type: Type.STRING,
+                description: "Targeted directive assigned for the next teammate, or task completion summary.",
+              },
+            },
+            required: ["content", "delegateId", "delegationTaskInstruction"],
+          },
         },
       });
 
-      const responseText = response.text || "No output generated.";
+      const responseText = response.text || "{}";
 
-      // Simple regex parser to extract delegation targets
+      let contentStr = "No output generated.";
       let targetAgentId: string | null = null;
       let delegationReason = "Delegated next turn";
       let isDone = false;
 
-      const delegationMatch = responseText.match(/Delegation:\s*([^\n(]+)\s*\(([^)]+)\)\s*(?:-?\s*(.*))?/i);
-      if (delegationMatch) {
-        targetAgentId = delegationMatch[2].trim();
-        delegationReason = delegationMatch[3]?.trim() || "Executing following step";
-      } else if (responseText.toLowerCase().includes("delegation: done")) {
-        isDone = true;
-      } else {
-        // Fallback: choose the next agent round-robin or randomly to prevent system deadlock
-        const currentIndex = agents.findIndex((a: any) => a.id === currentAgentId);
-        const nextIndex = (currentIndex + 1) % agents.length;
-        const nextAgent = agents[nextIndex];
-        if (nextAgent && nextAgent.id !== currentAgentId) {
-          targetAgentId = nextAgent.id;
-          delegationReason = "Sequential fallback rotation";
-        } else {
+      try {
+        // Parse the structured json from Gemini
+        const parsed = JSON.parse(responseText.trim());
+        contentStr = parsed.content || "Empty content output.";
+        const rawDelegate = (parsed.delegateId || "").trim();
+
+        if (rawDelegate.toLowerCase() === "done") {
           isDone = true;
+          delegationReason = parsed.delegationTaskInstruction || "Global task is fully satisfied.";
+        } else {
+          // Verify agent exists
+          const isValidAgent = agents.some((a: any) => a.id === rawDelegate);
+          if (isValidAgent) {
+            targetAgentId = rawDelegate;
+            delegationReason = parsed.delegationTaskInstruction || "Continuing execution stream.";
+          } else {
+            // Find named agent or fallback gracefully
+            const currentIndex = agents.findIndex((a: any) => a.id === currentAgentId);
+            const nextIndex = (currentIndex + 1) % agents.length;
+            const nextAgent = agents[nextIndex];
+            if (nextAgent && nextAgent.id !== currentAgentId) {
+              targetAgentId = nextAgent.id;
+              delegationReason = `Sequential fallback rotation (invalid agent id "${rawDelegate}" delegated)`;
+            } else {
+              isDone = true;
+              delegationReason = "Simulation finished via sequential fallback constraints.";
+            }
+          }
+        }
+      } catch (jsonErr) {
+        console.error("[Simulator Server] JSON parse failed, utilizing legacy regex parser fallback.", jsonErr);
+        contentStr = responseText;
+
+        const delegationMatch = responseText.match(/Delegation:\s*([^\n(]+)\s*\(([^)]+)\)\s*(?:-?\s*(.*))?/i);
+        if (delegationMatch) {
+          targetAgentId = delegationMatch[2].trim();
+          delegationReason = delegationMatch[3]?.trim() || "Executing following step";
+        } else if (responseText.toLowerCase().includes("delegation: done")) {
+          isDone = true;
+        } else {
+          const currentIndex = agents.findIndex((a: any) => a.id === currentAgentId);
+          const nextIndex = (currentIndex + 1) % agents.length;
+          const nextAgent = agents[nextIndex];
+          if (nextAgent && nextAgent.id !== currentAgentId) {
+            targetAgentId = nextAgent.id;
+            delegationReason = "Sequential fallback rotation";
+          } else {
+            isDone = true;
+          }
         }
       }
 
       res.json({
-        text: responseText,
+        text: contentStr,
         senderId: currentAgent.id,
         senderName: currentAgent.name,
         senderDesignation: currentAgent.designation,

@@ -13,6 +13,7 @@ export interface AgentNode {
   avatarColor?: string; // Hex color for the cute body character
   gender?: "male" | "female"; // Avatar styling gender choice
   state: AgentState;
+  deskRotation?: number; // desk rotation in degrees: 0, 90, 180, 270
 }
 
 export interface Message {
@@ -30,7 +31,7 @@ export type TimeMode = "day" | "night" | "matrix";
 
 export interface DecorItem {
   id: string;
-  type: "coffee" | "cooler" | "plant" | "couch";
+  type: "coffee" | "cooler" | "plant" | "couch" | "wall" | "store" | "conference";
   x: number;
   z: number;
 }
