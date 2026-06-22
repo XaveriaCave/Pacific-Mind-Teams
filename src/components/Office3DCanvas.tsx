@@ -1556,10 +1556,6 @@ export default function Office3DCanvas({
 
       {/* 3D Scene Interactive Overlay Controls */}
       <div className="absolute top-3 left-4 z-10 flex items-center gap-1.5 p-1 rounded-lg bg-slate-900/80 backdrop-blur-md border border-white/15 shadow-xl">
-        <span className="text-[8px] font-extrabold uppercase text-[#6366f1] px-2 py-0.5 border-r border-white/10 tracking-widest font-mono">
-          WebGL View
-        </span>
-
         <p className="text-[10px] text-slate-300 font-mono px-1 flex items-center gap-1">
           <RotateCw className="w-3 h-3 text-emerald-400 shrink-0" />
           <span>DRAG LEFT TO ORBIT &bull; DRAG RIGHT TO PAN</span>
