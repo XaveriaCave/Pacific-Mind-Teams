@@ -18,9 +18,9 @@ Open to Collaborate and make this App into more producton ready and deep Feature
 Plaaned next in pipeline: 
 -- Phase 7: FocusTime0Raw embeddings + function calling
 -- Phase 8: Tool-calling in server.ts
-- Phase 9: Hand-rolled RAG
-- Phase 10: LangGraph refactor: This can be breakdown into more sub phases
-- Phase 11: LangFlow (optional)
+-- Phase 9: Hand-rolled RAG
+-- Phase 10: LangGraph refactor: This can be breakdown into more sub phases
+-- Phase 11: LangFlow (optional)
 
 
 Connect with me on linkedin - https://www.linkedin.com/in/adarsh-mauryacpluspluspython
