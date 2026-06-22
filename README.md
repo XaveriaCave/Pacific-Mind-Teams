@@ -1,7 +1,5 @@
 ## Pacific Mind Teams'
 
-## Arsh Origins
-
 **Prerequisites:**  Node.js
 
 1. Install dependencies:
