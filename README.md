@@ -6,7 +6,7 @@ See the **Guide** inside the app for a detailed overview of the flow and feature
 
 ---
 
-## 🛠️ Prerequisites & Setup
+## Prerequisites & Setup
 
 Ensure you have **Node.js** installed before proceeding.
 
@@ -15,12 +15,13 @@ Ensure you have **Node.js** installed before proceeding.
    npm install
 
 ```
-
-2. **Configure Environment:**
-Set your `GEMINI_API_KEY` in a `.env.local` file.
-3. **Run the app:**
+2. **Run the app:**
 ```bash
 npm run dev
+3. **Configure Environment:**
+Set your `GEMINI_API_KEY` in the settings.
+
+Check the guide for more info and attached PRD for developers 
 
 ```
 
@@ -31,7 +32,7 @@ Obtain a Gemini API key, select your model, and start creating teams to delegate
 ---
 
 ## Planned Pipeline
-Till phase 6, byild is stable with grade B version 3.2 (Functional Testing (Smole and API)
+Till phase 6, build is stable with grade B version 3.2 (Functional Testing (Smoke and API)
 Non functional testings are underway with performance testing after upgradation of software in Phase 7-10.
 
 .
