@@ -11,19 +11,17 @@ See the **Guide** inside the app for a detailed overview of the flow and feature
 Ensure you have **Node.js** installed before proceeding.
 
 1. **Install dependencies:**
-   ```bash
+```
    npm install
-
 ```
 2. **Run the app:**
-```bash
+```
 npm run dev
+```
 3. **Configure Environment:**
 Set your `GEMINI_API_KEY` in the settings.
 
 Check the guide for more info and attached PRD for developers 
-
-```
 
 
 4. **Get Started:**
