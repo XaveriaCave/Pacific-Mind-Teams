@@ -34,11 +34,17 @@ Obtain a Gemini API key, select your model, and start creating teams to delegate
 Till phase 6, byild is stable with grade B version 3.2 (Functional Testing (Smole and API)
 Non functional testings are underway with performance testing after upgradation of software in Phase 7-10.
 
-* **Phase 7:** FocusTime0Raw embeddings + function calling
-* **Phase 8:** Tool-calling in `server.ts`
-* **Phase 9:** Hand-rolled RAG
-* **Phase 10:** LangGraph refactor *(to be broken down into sub-phases)*
-* **Phase 11:** LangFlow integration *(optional)*
+.
+
+Phase 7: FocusTime0Raw embeddings + function calling
+
+Phase 8: Tool-calling in server.ts
+
+Phase 9: Hand-rolled RAG
+
+Phase 10: LangGraph refactor (to be broken down into sub-phases)
+
+Phase 11: LangFlow integration (optional)
 
 ---
 
