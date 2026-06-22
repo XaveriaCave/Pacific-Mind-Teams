@@ -1597,7 +1597,10 @@ export default function Office3DCanvas({
 
         <button
           onClick={() => setShowHelpers((h) => !h)}
-          className="p-1.5 bg-slate-900/80 border border-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
+          className={`p-1.5 border rounded-lg transition-colors ${showHelpers
+            ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40"
+            : "bg-slate-900/80 border-white/10 text-slate-400 hover:text-white"
+            }`}
           title="Toggle guidelines description"
           id="toggle-canvas-helpers"
         >
